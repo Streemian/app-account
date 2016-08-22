@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Streemian Add Posting Keys</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css' rel='stylesheet'>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-12 col-md-8 col-md-offset-2">
+                <h2>Streemian Posting Key Adder</h2>
+            </div>
+        </div>
+        <br />
+
+        <div class="row">
+            <form id="form" class="col-xs-12 col-md-6 col-md-offset-2">
+
+                <div class="form-group">
+                    <label><i class="fa fa-user"></i> Account Name</label>
+                    <input id="account_name" class="form-control" type=text name="name" />
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fa fa-key"></i> Password</label>
+                    <div class="password">
+                        <input id="password" class="form-control" class="form-control" type=password name="password" />
+                    </div>
+                </div>
+
+                <div class="form-group" id="current_auths"></div>
+
+                <div class="form-group" id="posters"></div>
+
+                <button id="submit_button" type="submit" class="btn btn-primary disabled">Add streemian</button>
+
+            </form>
+        </div>
+    </div>
+    <script src="./bundle.min.js"></script>
+    <script type="text/javascript">
+
+        var options = {
+            apis: ["database_api", "network_broadcast_api"],
+            url: "wss://node.steem.ws"
+        };
+        var Client = window.bundle.Client;
+        var Api = Client.get(options, true);
+
+        Api.initPromise.then(function(res) {
+            console.log("Api ready", res);
+        });
+
+        var account;
+        var accountToAdd = "streemian";
+
+        var posterCount = 1;
+        var postersDiv =  document.getElementById("posters");
+
+        var accountNameInput = document.getElementById("account_name");
+        var submitButton = document.getElementById("submit_button");
+
+        var form = document.getElementById("form");
+
+        accountNameInput.onchange = lookUpAccount;
+        function lookUpAccount() {
+            Api.database_api().exec("get_accounts", [ [accountNameInput.value] ]).then(function(res) {
+                console.log("account:", res[0]);
+                account = res[0];
+                if (!res[0]) {
+                    submitButton.className = "btn btn-primary disabled";
+                    form.onsubmit = function(e) {e.preventDefault();};
+                } else {
+                    submitButton.className = "btn btn-primary";
+                    form.onsubmit = addStreemian;
+                }
+
+                checkAuths(res[0]);
+            });
+        }
+
+        function checkAuths(account) {
+            if (!account) {
+                submitButton.innerText = "Add streemian";
+                form.onsubmit = addStreemian;
+            } else {
+                var hasStreemian = false;
+                account.posting.account_auths.forEach(function(auth) {
+                    console.log("auth", auth);
+                    if (auth[0] === accountToAdd) {
+                        hasStreemian = true;
+                    }
+                });
+
+                if (hasStreemian) {
+                    submitButton.innerText = "Remove streemian";
+                    form.onsubmit = removeStreemian;
+                } else {
+                    submitButton.innerText = "Add streemian";
+                    form.onsubmit = addStreemian;
+                }
+            }
+        }
+
+        function renderPosters() {
+            var i = 0;
+            var currentEntries = postersDiv.children.length;
+            console.log("currentEntries:", currentEntries);
+            currentInput = [];
+            for (i = 0; i < currentEntries; i++) {
+                var inputElement = document.getElementById("poster_" + i);
+                if (inputElement && inputElement.value) {
+                    currentInput.push(inputElement.value);
+                }
+            }
+
+            postersDiv.innerHTML = "";
+
+            for (i = 0; i < posterCount; i++) {
+                var wrapperDiv = document.createElement("div");
+
+                // Label
+                var label = document.createElement("label");
+                var userIcon = document.createElement("i");
+                userIcon.className = "fa fa-user";
+                var labelText = document.createElement("span");
+                labelText.innerText = " New posting authority";
+                label.appendChild(userIcon);
+                label.appendChild(labelText);
+
+                // Input
+                var inputGroup = document.createElement("div");
+                inputGroup.className = "input-group";
+                var input = document.createElement("input");
+                input.className="form-control";
+                input.type = "text";
+                input.id = "poster_" + i;
+                input.value = currentInput[i] || "";
+
+                // Remove cross
+                var remove = document.createElement("div");
+                remove.className="input-group-addon";
+                remove.style = "cursor: pointer;";
+                remove.onclick = removePoster;
+                remove.innerHTML = "&times;";
+
+                wrapperDiv.appendChild(label);
+                inputGroup.appendChild(input);
+
+                if (i === 0) {
+                    remove.style = "visibility: hidden;";
+                }
+
+                inputGroup.appendChild(remove);
+
+                wrapperDiv.appendChild(inputGroup);
+
+                postersDiv.appendChild(wrapperDiv);
+            }
+
+            // Add more button
+            var addButton = document.createElement("button");
+            addButton.className="btn btn-success";
+            addButton.innerText="Add";
+            addButton.onclick= addPoster;
+            addButton.style = "margin-top: 10px;";
+
+            postersDiv.appendChild(addButton);
+        }
+
+        function addPoster(e) {
+            e.preventDefault();
+            posterCount++;
+            renderPosters();
+        }
+
+        function removePoster(e) {
+            e.preventDefault();
+            posterCount--;
+            renderPosters();
+        }
+
+        function removeStreemian(e) {
+            e.preventDefault();
+            var login = new window.bundle.Login();
+            var accountName = document.getElementById("account_name").value;
+            var password = document.getElementById("password").value;
+
+            if (!accountName || !password) {
+                return;
+            }
+
+            var postingAuth = account.posting;
+
+            for (var i = 0; i < postingAuth.account_auths.length; i++) {
+                if (postingAuth.account_auths[i][0] === accountToAdd) {
+                    break;
+                }
+            }
+
+            postingAuth.account_auths.splice(i, 1);
+
+            console.log("postingAuth:", postingAuth.account_auths);
+            login.setRoles(["active", "owner"]);
+            var success = login.checkKeys({
+                accountName: accountName,
+                password: password,
+                auths: {
+                    owner: account.owner.key_auths,
+                    active: account.active.key_auths
+                }}
+            );
+
+            console.log("login success:", success);
+            var tr = new window.bundle.TransactionBuilder();
+
+            tr.add_type_operation("account_update", {
+                account: accountName,
+                posting: postingAuth,
+                memo_key: account.memo_key,
+                json_metadata: account.json_metadata
+            });
+            try {
+                tr.process_transaction(login, null, true)
+                .then(function(res) {
+                    console.log("process_transaction", res);
+                    lookUpAccount();
+                }).catch(function(err) {
+                    console.log("err:", err);
+                })
+            }
+            catch(err) {
+                console.err(err);
+            }
+        }
+
+        function addStreemian(e) {
+            e.preventDefault();
+            var login = new window.bundle.Login();
+            var accountName = document.getElementById("account_name").value;
+            var password = document.getElementById("password").value;
+
+            if (!accountName || !password) {
+                return;
+            }
+
+            var postingAuth = account.posting;
+            postingAuth.account_auths.push([accountToAdd, postingAuth.weight_threshold]);
+
+            console.log("postingAuth:", postingAuth.account_auths);
+            login.setRoles(["active", "owner"]);
+            var success = login.checkKeys({
+                accountName: accountName,
+                password: password,
+                auths: {
+                    owner: account.owner.key_auths,
+                    active: account.active.key_auths
+                }}
+            );
+
+            console.log("login success:", success);
+            var tr = new window.bundle.TransactionBuilder();
+
+            tr.add_type_operation("account_update", {
+                account: accountName,
+                posting: postingAuth,
+                memo_key: account.memo_key,
+                json_metadata: account.json_metadata
+            });
+
+            try {
+                var result = tr.process_transaction(login, null, true)
+                .then(function(res) {
+                    console.log("process_transaction", res);
+                    lookUpAccount();
+                }).catch(function(err) {
+                    console.log("err:", err);
+                })
+            }
+            catch(err) {
+                console.err(err);
+            }
+
+            console.log("tr resyult:", result);
+        }
+
+        // renderPosters();
+
+    </script>
+</body>
+</html>
