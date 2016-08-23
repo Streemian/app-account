@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "babel src --presets babel-preset-es2015 --out-dir lib",
-    "build:watch": "babel --watch src --presets babel-preset-es2015 --out-dir lib",
+    "build:watch": "babel --watch src --presets babel-preset-es2015 --out-dir lib & cp src/index.html dist/index.html",
+    "postbuild": "cp src/index.html dist/index.html",
     "prebrowserify": "npm run build",
     "browserify": "browserify lib/index.js --standalone bundle -o dist/bundle.js -d",
     "postbrowserify": "uglifyjs --compress --mangle --sequences --drop_console --output dist/bundle.min.js -- dist/bundle.js"
@@ -22,7 +23,6 @@
     "uglifyjs": "^2.4.10"
   },
   "dependencies": {
-    "steem-rpc": "^0.6.1",
     "steemjs-lib": "^0.2.13"
   }
 }
