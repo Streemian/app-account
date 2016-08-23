@@ -38,7 +38,7 @@
 
                 <button id="submit_button" type="submit" class="btn btn-primary disabled">Add streemian</button>
 
-                <div class="danger">
+                <div id="error_div">
                     <p id="error_warning"></p>
                 </div>
 
@@ -50,7 +50,7 @@
             </form>
         </div>
     </div>
-    <script src="./bundle.min.js"></script>
+    <script src="./bundle.js"></script>
     <script type="text/javascript">
 
         var options = {
@@ -83,7 +83,7 @@
 
         var checkClass = "Streemian__check pull-right success";
         function lookUpAccount() {
-            console.log("lookUpAccount");
+
             Api.database_api().exec("get_accounts", [ [accountNameInput.value] ]).then(function(res) {
                 console.log("account:", res[0]);
                 var accountCheck = document.getElementById("account_check");
@@ -110,7 +110,6 @@
             } else {
                 var hasStreemian = false;
                 account.posting.account_auths.forEach(function(auth) {
-                    console.log("auth", auth);
                     if (auth[0] === accountToAdd) {
                         hasStreemian = true;
                     }
@@ -129,7 +128,9 @@
         }
 
         function setPasswordIncorrect() {
-            document.getElementById("error_warning").innerText = "Password incorrect";
+            document.getElementById("error_warning").innerText = "Password or active private key incorrect, please try again.";
+            document.getElementById("error_div").className = "danger";
+            document.getElementById("success_message").innerText = "";
         }
 
         function removeStreemian(e) {
@@ -137,13 +138,14 @@
 
             var accountName = document.getElementById("account_name").value;
             var password = document.getElementById("password").value;
-
-            if (!password) {
+            var login = verifyLogin(account, password, null);
+            if (!login) {
                 setPasswordIncorrect();
                 return;
+            } else {
+                document.getElementById("error_div").className = "";
+                document.getElementById("error_warning").innerText = "";
             }
-
-            document.getElementById("error_warning").innerText = "";
 
             var postingAuth = account.posting;
 
@@ -155,11 +157,6 @@
 
             postingAuth.account_auths.splice(i, 1);
 
-            console.log("postingAuth:", postingAuth.account_auths);
-            var login = verifyLogin(account, password, null);
-            if (!login) {
-                return;
-            }
             var tr = new window.bundle.TransactionBuilder();
 
             tr.add_type_operation("account_update", {
@@ -187,18 +184,17 @@
 
             var accountName = document.getElementById("account_name").value;
             var password = document.getElementById("password").value;
-
-            if (!accountName || !password) {
+            var login = verifyLogin(account, password, null);
+            if (!login) {
+                setPasswordIncorrect();
                 return;
+            } else {
+                document.getElementById("error_div").className = "";
+                document.getElementById("error_warning").innerText = "";
             }
 
             var postingAuth = account.posting;
             postingAuth.account_auths.push([accountToAdd, postingAuth.weight_threshold]);
-
-            var login = verifyLogin(account, password, null);
-            if (!login) {
-                return;
-            }
 
             var tr = new window.bundle.TransactionBuilder();
 
@@ -221,29 +217,53 @@
             catch(err) {
                 console.err(err);
             }
-
-            console.log("tr resyult:", result);
         }
 
-        function verifyLogin(account, password, key) {
-            var login = new window.bundle.Login();
-            login.setRoles(["active", "owner"]);
-            var success = login.checkKeys({
-                accountName: account.name,
-                password: password,
-                key: key,
-                auths: {
-                    owner: account.owner.key_auths,
-                    active: account.active.key_auths
-                }}
-            );
-
-            if (!success) {
+        function verifyLogin(account, pass) {
+            if (!pass) {
                 setPasswordIncorrect();
                 return false;
-            } else {
-                return login;
             }
+
+            try {
+                var passLogin = new window.bundle.Login();
+                passLogin.setRoles(["active"]);
+                var passCheck = passLogin.checkKeys({
+                    accountName: account.name,
+                    password: pass,
+                    privateKey: null,
+                    auths: {
+                        active: account.active.key_auths
+                    }}
+                );
+
+                if (passCheck) {
+                    return passLogin;
+                }
+
+                var keyLogin = new window.bundle.Login();
+                keyLogin.setRoles(["active"]);
+                var keyCheck = keyLogin.checkKeys({
+                    accountName: account.name,
+                    password: null,
+                    privateKey: pass,
+                    auths: {
+                        active: account.active.key_auths
+                    }}
+                );
+
+                console.log("keyCheck", keyCheck);
+
+                if (keyCheck) {
+                    return keyLogin;
+                }
+            } catch(err) {
+                console.log("err:", err);
+                return false;
+            }
+
+            setPasswordIncorrect();
+            return false;
         }
 
         // renderPosters();
