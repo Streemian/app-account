@@ -23,6 +23,6 @@
     "uglifyjs": "^2.4.10"
   },
   "dependencies": {
-    "steemjs-lib": "^0.2.13"
+    "steemjs-lib": "^0.2.14"
   }
 }
