@@ -1,0 +1,26 @@
+.Streemian__input {
+    width: calc(100% - 30px);
+    display: inline-block;
+}
+
+.Streemian__check {
+    display: inline-block;
+    visibility: hidden;
+}
+
+.Streemian__check.visible {
+    visibility: visible;
+}
+
+.Streemian__check > i {
+    font-size: 22px;
+    padding: 6px 0;
+}
+
+.danger {
+    color: #d9534f;
+}
+
+.success {
+    color: #5cb85c;
+}

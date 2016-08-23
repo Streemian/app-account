@@ -4,29 +4,32 @@
     <title>Streemian Add Posting Keys</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <div class="col-xs-12 col-md-8 col-md-offset-2">
+            <div class="col-xs-12 col-sm-8 col-sm-offset-2 text-center">
                 <h2>Streemian Posting Key Adder</h2>
             </div>
         </div>
         <br />
 
         <div class="row">
-            <form id="form" class="col-xs-12 col-md-6 col-md-offset-2">
+            <form id="form" class="col-xs-12 col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
 
                 <div class="form-group">
                     <label><i class="fa fa-user"></i> Account Name</label>
-                    <input id="account_name" class="form-control" type=text name="name" />
+                    <input id="account_name" class="form-control Streemian__input" type=text name="name" />
+                    <div id="account_check" class="Streemian__check pull-right"><i class="fa fa-check"></i></div>
                 </div>
 
                 <div class="form-group">
                     <label><i class="fa fa-key"></i> Password</label>
-                    <div class="password">
-                        <input id="password" class="form-control" class="form-control" type=password name="password" />
-                    </div>
+
+                    <input id="password" class="form-control Streemian__input" class="form-control" type=password name="password" />
+                    <div id="password_check" class="Streemian__check pull-right"><i class="fa fa-check"></i></div>
+
                 </div>
 
                 <div class="form-group" id="current_auths"></div>
@@ -34,6 +37,15 @@
                 <div class="form-group" id="posters"></div>
 
                 <button id="submit_button" type="submit" class="btn btn-primary disabled">Add streemian</button>
+
+                <div class="danger">
+                    <p id="error_warning"></p>
+                </div>
+
+                <div class="">
+                    <h4 id="success_message"></h4>
+                </div>
+
 
             </form>
         </div>
@@ -59,25 +71,30 @@
         var postersDiv =  document.getElementById("posters");
 
         var accountNameInput = document.getElementById("account_name");
+        accountNameInput.onchange = lookUpAccount;
+
         var submitButton = document.getElementById("submit_button");
 
         var form = document.getElementById("form");
-        form.onsubmit = function(e) {
+        function nullFunction(e) {
             e.preventDefault();
-        };
-        accountNameInput.onchange = lookUpAccount;
+        }
+        form.onsubmit = nullFunction;
+
+        var checkClass = "Streemian__check pull-right success";
         function lookUpAccount() {
             console.log("lookUpAccount");
             Api.database_api().exec("get_accounts", [ [accountNameInput.value] ]).then(function(res) {
                 console.log("account:", res[0]);
+                var accountCheck = document.getElementById("account_check");
+
                 account = res[0];
                 if (!res[0]) {
-                    submitButton.className = "btn btn-primary disabled";
-                    form.onsubmit = function(e) {
-                        e.preventDefault();
-                    };
+                    submitButton.className = "btn btn-success disabled";
+                    accountCheck.className = checkClass;
+                    form.onsubmit = nullFunction;
                 } else {
-                    submitButton.className = "btn btn-primary";
+                    accountCheck.className = checkClass + " visible";
                     form.onsubmit = addStreemian;
                 }
 
@@ -88,7 +105,8 @@
         function checkAuths(account) {
             if (!account) {
                 submitButton.innerText = "Add streemian";
-                form.onsubmit = addStreemian;
+                submitButton.className = "btn btn-success disabled";
+                form.onsubmit = nullFunction;
             } else {
                 var hasStreemian = false;
                 account.posting.account_auths.forEach(function(auth) {
@@ -100,23 +118,32 @@
 
                 if (hasStreemian) {
                     submitButton.innerText = "Remove streemian";
+                    submitButton.className = "btn btn-danger";
                     form.onsubmit = removeStreemian;
                 } else {
                     submitButton.innerText = "Add streemian";
+                    submitButton.className = "btn btn-success";
                     form.onsubmit = addStreemian;
                 }
             }
         }
 
+        function setPasswordIncorrect() {
+            document.getElementById("error_warning").innerText = "Password incorrect";
+        }
+
         function removeStreemian(e) {
             e.preventDefault();
-            var login = new window.bundle.Login();
+
             var accountName = document.getElementById("account_name").value;
             var password = document.getElementById("password").value;
 
-            if (!accountName || !password) {
+            if (!password) {
+                setPasswordIncorrect();
                 return;
             }
+
+            document.getElementById("error_warning").innerText = "";
 
             var postingAuth = account.posting;
 
@@ -129,17 +156,10 @@
             postingAuth.account_auths.splice(i, 1);
 
             console.log("postingAuth:", postingAuth.account_auths);
-            login.setRoles(["active", "owner"]);
-            var success = login.checkKeys({
-                accountName: accountName,
-                password: password,
-                auths: {
-                    owner: account.owner.key_auths,
-                    active: account.active.key_auths
-                }}
-            );
-
-            console.log("login success:", success);
+            var login = verifyLogin(account, password, null);
+            if (!login) {
+                return;
+            }
             var tr = new window.bundle.TransactionBuilder();
 
             tr.add_type_operation("account_update", {
@@ -151,7 +171,7 @@
             try {
                 tr.process_transaction(login, null, true)
                 .then(function(res) {
-                    console.log("process_transaction", res);
+                    document.getElementById("success_message").innerText = "streemian post authorisation has been revoked."
                     lookUpAccount();
                 }).catch(function(err) {
                     console.log("err:", err);
@@ -164,7 +184,7 @@
 
         function addStreemian(e) {
             e.preventDefault();
-            var login = new window.bundle.Login();
+
             var accountName = document.getElementById("account_name").value;
             var password = document.getElementById("password").value;
 
@@ -175,18 +195,11 @@
             var postingAuth = account.posting;
             postingAuth.account_auths.push([accountToAdd, postingAuth.weight_threshold]);
 
-            console.log("postingAuth:", postingAuth.account_auths);
-            login.setRoles(["active", "owner"]);
-            var success = login.checkKeys({
-                accountName: accountName,
-                password: password,
-                auths: {
-                    owner: account.owner.key_auths,
-                    active: account.active.key_auths
-                }}
-            );
+            var login = verifyLogin(account, password, null);
+            if (!login) {
+                return;
+            }
 
-            console.log("login success:", success);
             var tr = new window.bundle.TransactionBuilder();
 
             tr.add_type_operation("account_update", {
@@ -199,7 +212,7 @@
             try {
                 var result = tr.process_transaction(login, null, true)
                 .then(function(res) {
-                    console.log("process_transaction", res);
+                    document.getElementById("success_message").innerText = "streemian successfully given post authorisation"
                     lookUpAccount();
                 }).catch(function(err) {
                     console.log("err:", err);
@@ -210,6 +223,27 @@
             }
 
             console.log("tr resyult:", result);
+        }
+
+        function verifyLogin(account, password, key) {
+            var login = new window.bundle.Login();
+            login.setRoles(["active", "owner"]);
+            var success = login.checkKeys({
+                accountName: account.name,
+                password: password,
+                key: key,
+                auths: {
+                    owner: account.owner.key_auths,
+                    active: account.active.key_auths
+                }}
+            );
+
+            if (!success) {
+                setPasswordIncorrect();
+                return false;
+            } else {
+                return login;
+            }
         }
 
         // renderPosters();
