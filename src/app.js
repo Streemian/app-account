@@ -38,7 +38,7 @@ function setButtonPending() {
 }
 
 function lookUpAccount() {
-    Api.database_api().exec("get_accounts", [ [accountNameInput.value] ]).then(function(res) {
+    return Api.database_api().exec("get_accounts", [ [accountNameInput.value] ]).then(function(res) {
         console.log("account:", res[0]);
         var accountCheck = document.getElementById("account_check");
         account = res[0];
@@ -51,7 +51,19 @@ function lookUpAccount() {
             form.onsubmit = addStreemian;
         }
         checkAuths(res[0]);
+        return res[0];
     });
+}
+
+function includesAccount(account) {
+    var hasStreemian = false;
+    account.posting.account_auths.forEach(function(auth) {
+        if (auth[0] === accountToAdd) {
+            hasStreemian = true;
+        }
+    });
+
+    return hasStreemian;
 }
 
 function checkAuths(account) {
@@ -59,12 +71,7 @@ function checkAuths(account) {
         setButtonPending();
         form.onsubmit = nullFunction;
     } else {
-        var hasStreemian = false;
-        account.posting.account_auths.forEach(function(auth) {
-            if (auth[0] === accountToAdd) {
-                hasStreemian = true;
-            }
-        });
+        var hasStreemian = includesAccount(account);
 
         if (hasStreemian) {
             submitButtonText.innerText = button_downgrade;
@@ -122,8 +129,14 @@ function removeStreemian(e) {
     try {
         tr.process_transaction(login, null, true)
         .then(function(res) {
-            document.getElementById("success_message").innerText = "streemian post authorisation has been revoked."
-            lookUpAccount();
+            lookUpAccount().then(account => {
+                    console.log("account:", account);
+                    if (!includesAccount(account)) {
+                        document.getElementById("success_message").innerText = "streemian post authorisation has been revoked."
+                    }
+
+            })
+
         }).catch(function(err) {
             setBroadcastError();
             console.log("err:", err);
@@ -159,8 +172,12 @@ function addStreemian(e) {
     try {
         var result = tr.process_transaction(login, null, true)
         .then(function(res) {
-            document.getElementById("success_message").innerText = "streemian successfully given post authorisation"
-            lookUpAccount();
+            lookUpAccount().then(account => {
+                    console.log("account:", account);
+                    if (includesAccount(account)) {
+                        document.getElementById("success_message").innerText = "streemian successfully given post authorisation"
+                    }
+            })
         }).catch(function(err) {
             setBroadcastError();
             console.log("err:", err);
@@ -215,4 +232,3 @@ function verifyLogin(account, pass) {
 
 // renderPosters();
 setButtonPending();
-
