@@ -47,7 +47,7 @@
          <div id="account_check" class="Streemian__check pull-right"><i class="fa fa-check"></i></div>
         </div>
         <div class="form-group">
-         <label><i class="fa fa-key"></i> Password</label>
+         <label><i class="fa fa-key"></i> Password <i>or</i> <b>active</b> private key (wif)</label>
          <input id="password" class="form-control Streemian__input" class="form-control" type=password name="password" placeholder="password or active private key"/>
          <div id="password_check" class="Streemian__check pull-right"><i class="fa fa-check"></i></div>
         </div>
@@ -83,6 +83,28 @@
      account</p>
      <p>You can remove the <tt>streemian</tt> account at any time using
      this app</p>
+     <h4>Active Private Key Requirements</h4>
+     <p>Since new posting authorities can only be added to your account
+     if the transaction is signed by the <b>active</b> key, it is
+     required that you provide either the password or the active private
+     key to your account. However, because this particular key has
+     access to your funds, we have taken some pre-cautions to prevent
+     your funds from leaving your account:
+     <ol>
+      <li><b>Open Source App</b>: This app is open source and can be
+       reviewed by clicking on the banner in the top right corner</li>
+      <li><b>Downloadable App</b>: This app can be downloaded entirely
+       an be run locally using the releases on github.
+      <li><b>Key doesn't leave browser</b>: This app is written in such
+       a way that the private key/password doesn't leave your browser.
+       The transaction to change your account is generated and signed in
+       the browser. No further communication besides reading your
+       account data and broadcasting the change is required</li>
+      <li><b>No Storage</b>: This app does <b>not</b> store the password
+       or the private key your provided on your computer or anywhere
+       else.</li>
+     </ol>
+     </p>
     </div>
    </div>
   </div>

@@ -1,6 +1,6 @@
 {
   "name": "streemian-app-account",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "",
   "main": "index.js",
   "browser": {
@@ -14,9 +14,9 @@
     "browserify": "browserify lib/index.js --standalone bundle -o dist/bundle.js -d",
     "postbrowserify": "uglifyjs --compress --mangle --sequences --drop_console --output dist/bundle.min.js -- dist/bundle.js",
     "tag": "git tag -s $npm_package_version && git push --tags",
-    "preparearchive": "cp -rf dist releases/app-account-$npm_package_version && cd releases && zip -r app-account-$npm_package_version.zip app-account-$npm_package_version &&",
+    "preparearchive": "cp -rf dist releases/app-account-$npm_package_version && cd releases && zip -r app-account-$npm_package_version.zip app-account-$npm_package_version",
     "checksums": "sha256sum releases/app-account-$npm_package_version.zip && sha1sum releases/app-account-$npm_package_version.zip",
-    "gh-pages": "git checkout gh-pages && cp -vfR releases/app-account-0.2.0/* . && git commit -am '[deploy] $npm_package_version' && git push origin gh-pages && git checkout master",
+    "gh-pages": "git checkout gh-pages && cp -vfR releases/app-account-$npm_package_version/* . && git commit -am '[deploy] $npm_package_version' && git push origin gh-pages && git checkout master",
     "release": "npm run tag && npm run preparearchive && npm run checksums"
   },
   "author": "Sigve Kvalsvik <bitsharesblocks@gmail.com>",
