@@ -1,273 +1,93 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Streemian Add Posting Keys</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-    <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="app.css">
-</head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-xs-12 col-sm-8 col-sm-offset-2 text-center">
-                <h2>Streemian Posting Key Adder</h2>
-            </div>
-        </div>
-        <br />
-
-        <div class="row">
-            <form id="form" class="col-xs-12 col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
-
-                <div class="form-group">
-                    <label><i class="fa fa-user"></i> Account Name</label>
-                    <input id="account_name" class="form-control Streemian__input" type=text name="name" />
-                    <div id="account_check" class="Streemian__check pull-right"><i class="fa fa-check"></i></div>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fa fa-key"></i> Password</label>
-
-                    <input id="password" class="form-control Streemian__input" class="form-control" type=password name="password" />
-                    <div id="password_check" class="Streemian__check pull-right"><i class="fa fa-check"></i></div>
-
-                </div>
-
-                <div class="form-group" id="current_auths"></div>
-
-                <div class="form-group" id="posters"></div>
-
-                <button id="submit_button" type="submit" class="btn btn-primary disabled">Add streemian</button>
-
-                <div id="error_div">
-                    <p id="error_warning"></p>
-                </div>
-
-                <div class="">
-                    <h4 id="success_message"></h4>
-                </div>
-
-
-            </form>
-        </div>
+ <head>
+  <title>Streemian Add Posting Keys</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="app.css">
+ </head>
+ <body>
+  <div class="container-fluid">
+   <div class="row">
+    <div class="col-xs-12 col-sm-8 col-sm-offset-2 text-center">
+     <img src="streemian-logo.svg" height="64px">
     </div>
-    <script src="./bundle.js"></script>
-    <script type="text/javascript">
+   </div>
+   <br />
+   <div class="row">
+    <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
 
-        var options = {
-            apis: ["database_api", "network_broadcast_api"],
-            url: "wss://node.steem.ws"
-        };
-        var Client = window.bundle.Client;
-        var Api = Client.get(options, true);
+     <div class="panel panel-default">
+      <div class="panel-heading">
+       <h3 class="panel-title">About This App</h3>
+      </div>
+      <div class="panel-body">
+       <p>
+       This Account App let's you upgrade your account such that it can be
+       used by the services offered by Streemian.com.</p>
+       <p>By upgrading your account with this app, you will:
+       <ol>
+        <li>allow Streemian.com to <b>post</b> under your name and</li>
+        <li>allow Streemian.com to <b>vote</b> under your name.</li>
+       </ol>
+       At <u>no times</u> will we be able to access any of your funds in your
+       account.</p>
+      </div>
+     </div>
 
-        Api.initPromise.then(function(res) {
-            console.log("Api ready", res);
-        });
-
-        var account;
-        var accountToAdd = "streemian";
-
-        var posterCount = 1;
-        var postersDiv =  document.getElementById("posters");
-
-        var accountNameInput = document.getElementById("account_name");
-        accountNameInput.onchange = lookUpAccount;
-
-        var submitButton = document.getElementById("submit_button");
-
-        var form = document.getElementById("form");
-        function nullFunction(e) {
-            e.preventDefault();
-        }
-        form.onsubmit = nullFunction;
-
-        var checkClass = "Streemian__check pull-right success";
-        function lookUpAccount() {
-
-            Api.database_api().exec("get_accounts", [ [accountNameInput.value] ]).then(function(res) {
-                console.log("account:", res[0]);
-                var accountCheck = document.getElementById("account_check");
-
-                account = res[0];
-                if (!res[0]) {
-                    submitButton.className = "btn btn-success disabled";
-                    accountCheck.className = checkClass;
-                    form.onsubmit = nullFunction;
-                } else {
-                    accountCheck.className = checkClass + " visible";
-                    form.onsubmit = addStreemian;
-                }
-
-                checkAuths(res[0]);
-            });
-        }
-
-        function checkAuths(account) {
-            if (!account) {
-                submitButton.innerText = "Add streemian";
-                submitButton.className = "btn btn-success disabled";
-                form.onsubmit = nullFunction;
-            } else {
-                var hasStreemian = false;
-                account.posting.account_auths.forEach(function(auth) {
-                    if (auth[0] === accountToAdd) {
-                        hasStreemian = true;
-                    }
-                });
-
-                if (hasStreemian) {
-                    submitButton.innerText = "Remove streemian";
-                    submitButton.className = "btn btn-danger";
-                    form.onsubmit = removeStreemian;
-                } else {
-                    submitButton.innerText = "Add streemian";
-                    submitButton.className = "btn btn-success";
-                    form.onsubmit = addStreemian;
-                }
-            }
-        }
-
-        function setPasswordIncorrect() {
-            document.getElementById("error_warning").innerText = "Password or active private key incorrect, please try again.";
-            document.getElementById("error_div").className = "danger";
-            document.getElementById("success_message").innerText = "";
-        }
-
-        function removeStreemian(e) {
-            e.preventDefault();
-
-            var accountName = document.getElementById("account_name").value;
-            var password = document.getElementById("password").value;
-            var login = verifyLogin(account, password, null);
-            if (!login) {
-                setPasswordIncorrect();
-                return;
-            } else {
-                document.getElementById("error_div").className = "";
-                document.getElementById("error_warning").innerText = "";
-            }
-
-            var postingAuth = account.posting;
-
-            for (var i = 0; i < postingAuth.account_auths.length; i++) {
-                if (postingAuth.account_auths[i][0] === accountToAdd) {
-                    break;
-                }
-            }
-
-            postingAuth.account_auths.splice(i, 1);
-
-            var tr = new window.bundle.TransactionBuilder();
-
-            tr.add_type_operation("account_update", {
-                account: accountName,
-                posting: postingAuth,
-                memo_key: account.memo_key,
-                json_metadata: account.json_metadata
-            });
-            try {
-                tr.process_transaction(login, null, true)
-                .then(function(res) {
-                    document.getElementById("success_message").innerText = "streemian post authorisation has been revoked."
-                    lookUpAccount();
-                }).catch(function(err) {
-                    console.log("err:", err);
-                })
-            }
-            catch(err) {
-                console.err(err);
-            }
-        }
-
-        function addStreemian(e) {
-            e.preventDefault();
-
-            var accountName = document.getElementById("account_name").value;
-            var password = document.getElementById("password").value;
-            var login = verifyLogin(account, password, null);
-            if (!login) {
-                setPasswordIncorrect();
-                return;
-            } else {
-                document.getElementById("error_div").className = "";
-                document.getElementById("error_warning").innerText = "";
-            }
-
-            var postingAuth = account.posting;
-            postingAuth.account_auths.push([accountToAdd, postingAuth.weight_threshold]);
-
-            var tr = new window.bundle.TransactionBuilder();
-
-            tr.add_type_operation("account_update", {
-                account: accountName,
-                posting: postingAuth,
-                memo_key: account.memo_key,
-                json_metadata: account.json_metadata
-            });
-
-            try {
-                var result = tr.process_transaction(login, null, true)
-                .then(function(res) {
-                    document.getElementById("success_message").innerText = "streemian successfully given post authorisation"
-                    lookUpAccount();
-                }).catch(function(err) {
-                    console.log("err:", err);
-                })
-            }
-            catch(err) {
-                console.err(err);
-            }
-        }
-
-        function verifyLogin(account, pass) {
-            if (!pass) {
-                setPasswordIncorrect();
-                return false;
-            }
-
-            try {
-                var passLogin = new window.bundle.Login();
-                passLogin.setRoles(["active"]);
-                var passCheck = passLogin.checkKeys({
-                    accountName: account.name,
-                    password: pass,
-                    privateKey: null,
-                    auths: {
-                        active: account.active.key_auths
-                    }}
-                );
-
-                if (passCheck) {
-                    return passLogin;
-                }
-
-                var keyLogin = new window.bundle.Login();
-                keyLogin.setRoles(["active"]);
-                var keyCheck = keyLogin.checkKeys({
-                    accountName: account.name,
-                    password: null,
-                    privateKey: pass,
-                    auths: {
-                        active: account.active.key_auths
-                    }}
-                );
-
-                console.log("keyCheck", keyCheck);
-
-                if (keyCheck) {
-                    return keyLogin;
-                }
-            } catch(err) {
-                console.log("err:", err);
-                return false;
-            }
-
-            setPasswordIncorrect();
-            return false;
-        }
-
-        // renderPosters();
-
-    </script>
-</body>
+     <div class="panel panel-warning">
+      <div class="panel-heading">
+       <h3 class="panel-title">Upgrade Account</h3>
+      </div>
+      <div class="panel-body">
+       <form id="form">
+        <div class="form-group">
+         <label><i class="fa fa-user"></i> Account Name</label>
+         <input id="account_name" class="form-control Streemian__input" type=text name="name" placeholder="account name"/>
+         <div id="account_check" class="Streemian__check pull-right"><i class="fa fa-check"></i></div>
+        </div>
+        <div class="form-group">
+         <label><i class="fa fa-key"></i> Password</label>
+         <input id="password" class="form-control Streemian__input" class="form-control" type=password name="password" placeholder="password or active private key"/>
+         <div id="password_check" class="Streemian__check pull-right"><i class="fa fa-check"></i></div>
+        </div>
+        <div class="form-group" id="current_auths"></div>
+        <div class="form-group" id="posters"></div>
+        <button id="submit_button" type="submit" class="btn btn-primary disabled">
+         <i id="submit_buttonSpinner" class=''></i> 
+         <span id="submit_buttonText"></span>
+        </button>
+        <div id="error_div">
+         <p id="error_warning"></p>
+        </div>
+        <div class="">
+         <h4 id="success_message"></h4>
+        </div>
+       </form>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="row">
+    <div class="col-xs-12 col-sm-8 col-sm-offset-2 col-md-6 col-md-offset-3">
+     <h4>Technical Details</h4>
+     <p>Every account on STEEM constitutes <b>three permissions</b>:
+     owner, active, and <i>posting</i>. The latter is used to authorize
+     your password, a cryptographic key or another user to post with
+     this particular account.</p>
+     <p>Your password authorizes you to post with this account.</p>
+     <p>In order to let Streemian.com use your account, this app will
+     install the <tt>streemian</tt> account into the posting
+     permission.</p>
+     <p>This gives Streemian.com posting and voting permission for your
+     account</p>
+     <p>You can remove the <tt>streemian</tt> account at any time using
+     this app</p>
+    </div>
+   </div>
+  </div>
+  <a href="https://github.com/streemian/app-account"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+  <script src="./bundle.js"></script>
+  <script src="./app.js"></script>
+ </body>
 </html>

@@ -1,3 +1,7 @@
+body {
+ padding-top: 10px;
+}
+
 .Streemian__input {
     width: calc(100% - 30px);
     display: inline-block;
