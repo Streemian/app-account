@@ -1,7 +1,7 @@
 {
   "name": "streemian-app-account",
-  "version": "0.2.1",
-  "description": "",
+  "version": "0.2.2",
+  "description": "Unlock your Steem account for streemian.com",
   "main": "index.js",
   "browser": {
     "ws": false
@@ -20,6 +20,9 @@
     "release": "npm run tag && npm run preparearchive && npm run checksums"
   },
   "author": "Sigve Kvalsvik <bitsharesblocks@gmail.com>",
+  "contributors": [
+    "Fabian Schuh <info@streemian.com>"
+  ],
   "license": "ISC",
   "devDependencies": {
     "babel-cli": "^6.11.4",
@@ -28,6 +31,6 @@
     "uglifyjs": "^2.4.10"
   },
   "dependencies": {
-    "steemjs-lib": "^0.3.1"
+    "steemjs-lib": "latest"
   }
 }
