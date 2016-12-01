@@ -16,7 +16,7 @@
     "tag": "git tag -s $npm_package_version && git push --tags",
     "preparearchive": "cp -rf dist releases/app-account-$npm_package_version && cd releases && zip -r app-account-$npm_package_version.zip app-account-$npm_package_version",
     "checksums": "sha256sum releases/app-account-$npm_package_version.zip && sha1sum releases/app-account-$npm_package_version.zip",
-    "gh-pages": "git checkout gh-pages && cp -vfR releases/app-account-$npm_package_version/* . && git commit -am '[deploy] $npm_package_version' && git push origin gh-pages && git checkout master",
+    "gh-pages": "git checkout gh-pages && cp -vfR releases/app-account-$npm_package_version/* . && git commit -am \"[deploy] $npm_package_version\" && git push origin gh-pages && git checkout master",
     "release": "npm run tag && npm run preparearchive && npm run checksums"
   },
   "author": "Sigve Kvalsvik <bitsharesblocks@gmail.com>",
