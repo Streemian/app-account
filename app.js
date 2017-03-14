@@ -27,7 +27,7 @@ var form = document.getElementById("form");
 form.onsubmit = nullFunction;
 accountNameInput.onchange = lookUpAccount;
 
-var checkClass = "Streemian__check pull-right success";
+var checkClass = "app_check pull-right success";
 
 function nullFunction(e) {
     e.preventDefault();
@@ -50,7 +50,7 @@ function lookUpAccount() {
             form.onsubmit = nullFunction;
         } else {
             accountCheck.className = checkClass + " visible";
-            form.onsubmit = addStreemian;
+            form.onsubmit = addAccountToPermission;
         }
         checkAuths(res[0]);
         return res[0];
@@ -58,14 +58,14 @@ function lookUpAccount() {
 }
 
 function includesAccount(account) {
-    var hasStreemian = false;
+    var hasPermission = false;
     account.posting.account_auths.forEach(function (auth) {
         if (auth[0] === accountToAdd) {
-            hasStreemian = true;
+            hasPermission = true;
         }
     });
 
-    return hasStreemian;
+    return hasPermission;
 }
 
 function checkAuths(account) {
@@ -73,18 +73,18 @@ function checkAuths(account) {
         setButtonPending();
         form.onsubmit = nullFunction;
     } else {
-        var hasStreemian = includesAccount(account);
+        var hasPermission = includesAccount(account);
 
-        if (hasStreemian) {
+        if (hasPermission) {
             submitButtonText.innerText = button_downgrade;
             submitButton.className = "btn btn-danger";
             submitButtonSpinner.className = "";
-            form.onsubmit = removeStreemian;
+            form.onsubmit = removeAccountPermissions;
         } else {
             submitButtonText.innerText = button_upgrade;
             submitButton.className = "btn btn-success";
             submitButtonSpinner.className = "";
-            form.onsubmit = addStreemian;
+            form.onsubmit = addAccountToPermission;
         }
     }
 }
@@ -101,7 +101,7 @@ function setBroadcastError() {
     document.getElementById("success_message").innerText = "";
 }
 
-function removeStreemian(e) {
+function removeAccountPermissions(e) {
     e.preventDefault();
     var accountName = document.getElementById("account_name").value;
     var password = document.getElementById("password").value;
@@ -132,7 +132,7 @@ function removeStreemian(e) {
             lookUpAccount().then(function (account) {
                 console.log("account:", account);
                 if (!includesAccount(account)) {
-                    document.getElementById("success_message").innerText = "streemian post authorisation has been revoked.";
+                    document.getElementById("success_message").innerText = "Posting authorisation has been revoked.";
                 }
             });
         }).catch(function (err) {
@@ -145,7 +145,7 @@ function removeStreemian(e) {
     }
 }
 
-function addStreemian(e) {
+function addAccountToPermission(e) {
     e.preventDefault();
     var accountName = document.getElementById("account_name").value;
     var password = document.getElementById("password").value;
@@ -171,7 +171,7 @@ function addStreemian(e) {
             lookUpAccount().then(function (account) {
                 console.log("account:", account);
                 if (includesAccount(account)) {
-                    document.getElementById("success_message").innerText = "streemian successfully given post authorisation";
+                    document.getElementById("success_message").innerText = "Posting authorisation successfully added";
                 }
             });
         }).catch(function (err) {

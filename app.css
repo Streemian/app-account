@@ -2,21 +2,21 @@ body {
  padding-top: 10px;
 }
 
-.Streemian__input {
+.app_input {
     width: calc(100% - 30px);
     display: inline-block;
 }
 
-.Streemian__check {
+.app_check {
     display: inline-block;
     visibility: hidden;
 }
 
-.Streemian__check.visible {
+.app_check.visible {
     visibility: visible;
 }
 
-.Streemian__check > i {
+.app_check > i {
     font-size: 22px;
     padding: 6px 0;
 }
