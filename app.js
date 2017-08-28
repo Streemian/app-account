@@ -2,7 +2,7 @@
 
 var options = {
     apis: ["database_api", "network_broadcast_api"],
-    url: "wss://steemd.steemit.com"
+    url: "wss://steemd-int.steemit.com"
 };
 var Client = window.bundle.Client;
 var Api = Client.get(options, true);
