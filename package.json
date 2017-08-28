@@ -1,6 +1,6 @@
 {
   "name": "streemian-app-account",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Unlock your Steem account for streemian.com",
   "repository": "https://github.com/streemian/app-account",
   "main": "index.js",
